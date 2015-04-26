@@ -1,0 +1,166 @@
+<html>
+<head>
+	<style>
+	#c {
+	    position:absolute;
+	    width:100%;
+	    height:100%;
+	    top:0px;
+	    bottom:0px;
+	    left:0px;
+	    right:0px;
+	    overflow:hidden;
+	    background-color:#000;
+	}
+	</style>
+
+</head>
+<body>
+	<canvas id="c">
+
+	<script>
+
+	window.requestAnimFrame = (function () {
+	return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function ( /* function */ callback, /* DOMElement */ element) {
+	    window.setTimeout(callback, 1000/60); // framerate only used in fallback
+	};
+	})();
+
+	var global_context = function (){
+
+		// global variables
+		canvas = document.getElementById('c');
+		w = canvas.width = window.innerWidth;
+		h = canvas.height = window.innerHeight;
+		ctx = canvas.getContext('2d');
+		time = 0;
+
+		// initiate points
+		var pts = [];
+		var n_pts = 40;
+		for (var i = 0 ; i < n_pts ; i++){
+		    new_pt = {
+		        r:Math.floor(Math.random()*75)+50,
+		        b:Math.floor(Math.random()*75)+50,
+		        g:Math.floor(Math.random()*75)+50,
+		        p:{
+		            x:w/2,
+		            y:h/2
+		        },
+		        v:{
+		            x:1+(Math.random()-.5)*4,
+		            y:1+(Math.random()-.5)*4
+		        },
+		        radius: Math.min(w,h)/(2*15)
+		    };
+		    pts.push(new_pt);
+		}
+
+		function draw(pt) {
+		    ctx.fillStyle = 'rgba(' + pt.r + ',' + pt.g + ',' + pt.b + ',' +1+ ')';
+
+		    ctx.beginPath();
+		    ctx.arc(pt.p.x, pt.p.y, pt.radius, 0, 2 * Math.PI);
+		    ctx.fill();
+
+		    ctx.strokeStyle = 'rgba(' + Math.floor(pt.r*2) +
+		    	',' + Math.floor(pt.g*2) +
+		    	',' + Math.floor(pt.b*2) + ',' +0.2+ ')';
+		    ctx.lineWidth = Math.min(w,h)/150;
+		    ctx.beginPath();
+
+		    ctx.moveTo(pt.p.x,pt.p.y);
+
+		    len_scale = Math.min(w,h)/10;
+		    ctx.lineTo(pt.p.x+(pt.v.x*len_scale),pt.p.y+(pt.v.y*len_scale));
+		    ctx.stroke();	
+		}
+
+		function wall_bounce(pt){
+			if (pt.p.x + pt.radius >= w){
+				pt.v.x *= -1;
+				pt.p.x = w - 1 - pt.radius;
+			}
+			if (pt.p.x - pt.radius <= 0){
+				pt.v.x *= -1;
+				pt.p.x = 1 + pt.radius;
+			}
+			if (pt.p.y + pt.radius >= h){
+				pt.v.y *= -1;
+				pt.p.y = h - 1 - pt.radius;
+			}
+			if (pt.p.y - pt.radius <= 0){
+				pt.v.y *= -1;
+				pt.p.y = 1 + pt.radius;
+			}
+			return pt;
+		}
+
+
+		animate();
+		function animate() {
+		   
+		    requestAnimationFrame(animate); // infinite loop
+
+		    /////////////////////////////////////////////////
+		    if (time%1 === 0){ // framerate-ish
+		   
+			    
+			    
+			    // clear draw
+			    ctx.fillStyle = 'rgba(0,0,0,.50)';
+			    ctx.fillRect(0, 0, w, h);
+			    
+
+			    var avg = {p: {x:0, y:0}, v: {x:0, y:0}};
+
+			    for (var i = 0; i < pts.length; i++){
+			        avg.p.x += pts[i].p.x; avg.p.y += pts[i].p.y;
+			        avg.v.x += pts[i].v.x; avg.v.y += pts[i].v.y;
+			    }
+			    avg.p.x /= pts.length; avg.p.y /= pts.length; 
+			    avg.v.x /= pts.length; avg.v.y /= pts.length; 
+			    
+			    
+			    for (var i = 0; i < pts.length; i++){
+			        
+			        // compute vec between this point and avg
+			        dir_x = avg.p.x - pts[i].p.x;
+			        dir_y = avg.p.y - pts[i].p.y;
+
+			        v_dir_x = avg.v.x - pts[i].v.x;
+			        v_dir_y = avg.v.y - pts[i].v.y;
+
+
+			        // long range cohesion
+			        pts[i].v.x += dir_x*.0001;
+			        pts[i].v.y += dir_y*.0001;
+
+			        // alignment
+			        pts[i].v.x += v_dir_x*.001;
+			        pts[i].v.y += v_dir_y*.001;
+
+
+			        // move
+			        pts[i].p.x += pts[i].v.x;
+			        pts[i].p.y += pts[i].v.y;
+			        
+			        pts[i] = wall_bounce(pts[i]);
+			         
+			        draw(pts[i]);
+			    }
+
+		    }
+		    
+		    time++;    
+		    //////////////////////////////////////////////////  
+		}
+
+
+		};
+
+	global_context();
+
+	</script>	
+</body>
+</html>

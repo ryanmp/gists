@@ -26,6 +26,9 @@
 	};
 	})();
 
+
+
+
 	var global_context = function (){
 
 		// global variables
@@ -35,25 +38,47 @@
 		ctx = canvas.getContext('2d');
 		time = 0;
 
+		// init v
+		var group_v = {x:2, y:2};
+		var v_scale = 2;
+
+		// flocking params
+		var alignment_scale = .005;
+		var cohesion_scale = .00005;
+		var repulsion_force = 100;
+
 		// initiate points
 		var pts = [];
-		var n_pts = 40;
+		var n_pts = 50;
 		for (var i = 0 ; i < n_pts ; i++){
 		    new_pt = {
 		        r:Math.floor(Math.random()*75)+50,
 		        b:Math.floor(Math.random()*75)+50,
 		        g:Math.floor(Math.random()*75)+50,
 		        p:{
-		            x:w/2,
-		            y:h/2
+		            x:w/2 + (Math.random()-.5)*w/4,
+		            y:h/2 + (Math.random()-.5)*w/4
 		        },
 		        v:{
-		            x:1+(Math.random()-.5)*4,
-		            y:1+(Math.random()-.5)*4
+		            x:group_v.x+(Math.random()-.5)*v_scale,
+		            y:group_v.y+(Math.random()-.5)*v_scale
 		        },
-		        radius: Math.min(w,h)/(2*15)
+		        radius: Math.min(w,h)/(2*30)
 		    };
 		    pts.push(new_pt);
+		}
+
+		function dist(p1,p2){
+			x = (p2.x - p1.x);
+			y = (p2.y - p1.y);
+			return Math.sqrt(x*x + y*y)
+		}
+
+		function exp(v_in, exponent){
+			for (var i = 0; i < exponent; i++){
+				v_in *= v_in;
+			}
+			return v_in;
 		}
 
 		function draw(pt) {
@@ -65,8 +90,8 @@
 
 		    ctx.strokeStyle = 'rgba(' + Math.floor(pt.r*2) +
 		    	',' + Math.floor(pt.g*2) +
-		    	',' + Math.floor(pt.b*2) + ',' +0.2+ ')';
-		    ctx.lineWidth = Math.min(w,h)/150;
+		    	',' + Math.floor(pt.b*2) + ',' +0.05+ ')';
+		    ctx.lineWidth = Math.min(w,h)/250;
 		    ctx.beginPath();
 
 		    ctx.moveTo(pt.p.x,pt.p.y);
@@ -76,22 +101,31 @@
 		    ctx.stroke();	
 		}
 
+		function clamp(v1, min, max){
+			if (v1.x <= min){v1.x = min};
+			if (v1.x >= max){v1.x = max};
+			if (v1.y <= min){v1.y = min};
+			if (v1.y >= max){v1.y = max};
+
+			return v1;
+		}
+
 		function wall_bounce(pt){
 			if (pt.p.x + pt.radius >= w){
 				pt.v.x *= -1;
-				pt.p.x = w - 1 - pt.radius;
+				pt.p.x = w - 2 - pt.radius;
 			}
 			if (pt.p.x - pt.radius <= 0){
 				pt.v.x *= -1;
-				pt.p.x = 1 + pt.radius;
+				pt.p.x = 2 + pt.radius;
 			}
 			if (pt.p.y + pt.radius >= h){
 				pt.v.y *= -1;
-				pt.p.y = h - 1 - pt.radius;
+				pt.p.y = h - 2 - pt.radius;
 			}
 			if (pt.p.y - pt.radius <= 0){
 				pt.v.y *= -1;
-				pt.p.y = 1 + pt.radius;
+				pt.p.y = 2 + pt.radius;
 			}
 			return pt;
 		}
@@ -108,7 +142,7 @@
 			    
 			    
 			    // clear draw
-			    ctx.fillStyle = 'rgba(0,0,0,.50)';
+			    ctx.fillStyle = 'rgba(0,0,0,.05)';
 			    ctx.fillRect(0, 0, w, h);
 			    
 
@@ -124,6 +158,31 @@
 			    
 			    for (var i = 0; i < pts.length; i++){
 			        
+			        // short range repulsion
+			    	repel = {x:0,y:0};
+			    	repel_v = {x:0, y:0};
+			    	for (var j = 0 ; j < pts.length ; j++){
+
+			    		d = dist(pts[i].p,pts[j].p);
+						d = exp(d,1);
+
+			    		repel.x = pts[i].p.x - pts[j].p.x;
+			    		repel.y = pts[i].p.y - pts[j].p.y;
+
+			    		//console.log(d);
+			    		if ( d>.0001 && d<350 ){
+				    		repel_v.x += repulsion_force*repel.x/d;
+				        	repel_v.y += repulsion_force*repel.y/d;
+				        }
+
+			    	}
+			    	
+			    	if (repel_v.x < 20 && repel_v.y < 20){
+				    	pts[i].v.x += repel_v.x/pts.length;
+				        pts[i].v.y += repel_v.y/pts.length;
+				    }
+
+
 			        // compute vec between this point and avg
 			        dir_x = avg.p.x - pts[i].p.x;
 			        dir_y = avg.p.y - pts[i].p.y;
@@ -131,15 +190,20 @@
 			        v_dir_x = avg.v.x - pts[i].v.x;
 			        v_dir_y = avg.v.y - pts[i].v.y;
 
-
 			        // long range cohesion
-			        pts[i].v.x += dir_x*.0001;
-			        pts[i].v.y += dir_y*.0001;
+			        pts[i].v.x += dir_x*cohesion_scale;
+			        pts[i].v.y += dir_y*cohesion_scale;
 
 			        // alignment
-			        pts[i].v.x += v_dir_x*.001;
-			        pts[i].v.y += v_dir_y*.001;
+			        pts[i].v.x += v_dir_x*alignment_scale;
+			        pts[i].v.y += v_dir_y*alignment_scale;
 
+			        // autonomy
+			        pts[i].v.x += (Math.random()-.5)*.01;
+			        pts[i].v.y += (Math.random()-.5)*.01;
+
+			        // set a max v
+			        pts[i].v = clamp(pts[i].v,-6,6);
 
 			        // move
 			        pts[i].p.x += pts[i].v.x;

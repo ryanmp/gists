@@ -1,0 +1,42 @@
+$darkest : #111;
+$lightest : #eee;
+$fontfamily : 'Helvetica', sans-serif;
+$prettyblue : #1155aa;
+$prettybluelight : lighten(#4477ee, 15%);
+$prettybluedark : darken(#4477ee, 10%);
+
+body{
+  background-color: #888;
+  color: $lightest;
+  font-family: $fontfamily;
+}
+
+button{
+  color: $prettybluelight;
+  background-color: $prettyblue;
+  border: solid 1px $prettybluelight;
+  border-radius: 5px;
+  padding: 8px 10px 4px 10px;
+  font-size: 20px;
+  font-family: $fontfamily;
+  font-weight: 200;
+  outline: none;
+  box-shadow: 0px 2px 5px 0px rgba(black, .2);
+  
+  
+  &:hover{
+    color: lighten($prettybluelight, 10%);
+    background-color: lighten($prettyblue,10%);
+    border: solid 1px lighten($prettybluelight,10%);
+  }
+  
+  &:active{
+     color: lighten($prettybluelight, 5%);
+    background-color: lighten($prettyblue,5%);
+    border: solid 1px lighten($prettybluelight,5%);
+  }
+  
+}
+
+
+  

@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "main.css",
+  "sources": [
+    "main.scss"
+  ],
+  "names": [],
+  "mappings": ";AAOA;EACE,kBAAkB;EAClB,OARU;EASV,aARY;;;AAWd;EACE,OAViB;EAWjB,kBAZY;EAaZ,QAAQ;EACR,eAAe;EACf,SAAS;EACT,WAAW;EACX,aAlBY;EAmBZ,aAAa;EACb,SAAS;EACT,YAAY;;EAAd,MAAM;IAIF,OAAO;IACP,kBAAkB;IAClB,QAAQ;;EACZ,MAAM;IAGD,OAAO;IACR,kBAAkB;IAClB,QAAQ",
+  "sourceRoot": ""
+}
